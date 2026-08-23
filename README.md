@@ -49,7 +49,3 @@ A dedicated UVM Subscriber class (`m_axi_cov`) contains a comprehensive `covergr
 - AXI bus write/read response codes (`OKAY`, `SLVERR`, `DECERR`)
 - DUT sticky error outputs (`write_error`, `read_error`)
 
-**Cross Coverage Pairs:**
-- Direction × burst type
-- Direction × address starting offsets (verifying unaligned reads and writes)
-- AXI response codes × DUT sticky error outputs, formally proving the design detects and flags every bus error
