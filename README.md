@@ -24,19 +24,6 @@ The design bridges a simplified, user-side streaming interface to fully complian
 - **Dynamic Burst Sizing** — Supports `INCR` (incrementing address), `FIXED` (constant FIFO address), and `WRAP` (cache wrapping) AXI4 burst types.
 - **First-Word Fall-Through (FWFT) Queues** — Internal storage buffers use an FWFT combinational design to eliminate the 1-cycle pipeline latency of standard registered FIFOs, aligning data, addresses, and control flags on their respective handshake clock cycles.
 
----
-
-## UVM Verification Architecture
-
-The testbench is implemented in SystemVerilog using a fully modular UVM structure to verify the design under high bus latency and randomized stimulus:
-
-- **Sequences and Transactions (`m_axi_tx`)** — Uses dynamic arrays (`user_tx_data[]`, `user_rx_data[]`) to handle variable-length, multi-beat bursts, with sizing and value constraints resolved by the solver in a single step.
-- **Accellera-Compliant Utility Methods** — Rather than relying on `uvm_field_*` macros, the transaction class manually implements optimized `do_copy`, `do_compare`, and `do_print` methods to reduce simulation overhead.
-- **Driver (`m_axi_driver`)** — Uses clock-synchronized `while` loops mapped to virtual interface clocking blocks (`drv_cb`) to avoid delta-cycle race conditions. Sequentially processes user-side transfers and emulates physical AXI4 slave responses (AW, W, B, AR, R channels) in the background.
-- **Monitor (`m_axi_mon`)** — Passively monitors both the user-side and physical AXI-side handshakes concurrently on clocking block edges (`mon_cb`), assembling complete transactions before broadcasting them via an Analysis Port.
-- **Scoreboard (`m_axi_sbd`)** — An event-driven, non-blocking checker that mathematically predicts expected AXI parameters (e.g., `ARLEN`, `AWLEN`, start strobes, data alignment) based on user-side stimulus and performs cycle-accurate assertions against the DUT's captured outputs.
-
----
 
 ## SystemVerilog Assertions (SVA)
 
