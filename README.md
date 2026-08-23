@@ -9,7 +9,6 @@ The design bridges a simplified, user-side streaming interface to fully complian
 ## Table of Contents
 
 - [Key Design Features (RTL)](#key-design-features-rtl)
-- [UVM Verification Architecture](#uvm-verification-architecture)
 - [SystemVerilog Assertions (SVA)](#systemverilog-assertions-sva)
 - [Functional Coverage Model](#functional-coverage-model)
 
