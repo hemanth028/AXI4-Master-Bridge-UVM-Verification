@@ -48,9 +48,8 @@ task drive_item(m_axi_tx tx);
 
     fork
 
-        //==========================================================
-        // Thread 1 : Command / Address Channel (AW/AR)
-        //==========================================================
+       // Command / Address Channel (AW/AR)
+
         begin : cmd_thread
 
             // User command
@@ -69,7 +68,6 @@ task drive_item(m_axi_tx tx);
 			@(posedge vif.drv_cb);
       //      vif.drv_cb.user_cmd_valid <= 1'b0;
 
-            // Slave ready
             vif.drv_cb.m_axi_awready <= 1'b1;
             vif.drv_cb.m_axi_arready <= 1'b1;
 
@@ -111,9 +109,9 @@ task drive_item(m_axi_tx tx);
         end
 
 
-        //==========================================================
-        // Thread 2 : Data Channel (W/B or R)
-        //==========================================================
+       
+        // Data Channel (W/B or R)
+        
         begin : data_thread
 		            //---------------- WRITE DATA ----------------
             if (req.user_rnw == 1'b0) begin
