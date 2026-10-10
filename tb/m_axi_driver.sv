@@ -25,7 +25,7 @@ class m_axi_driver extends uvm_driver#(m_axi_tx);
         vif.drv_cb.user_tx_data     <= 0;
         vif.drv_cb.user_tx_wstrb    <= 0;
 
-        // Initialize Slave Emulations [1.2.6]
+       
         vif.drv_cb.m_axi_awready    <= 1'b0;
         vif.drv_cb.m_axi_wready     <= 1'b0;
         vif.drv_cb.m_axi_arready    <= 1'b0;
