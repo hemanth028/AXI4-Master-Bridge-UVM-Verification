@@ -19,26 +19,26 @@ class m_axi_mon extends uvm_monitor;
 
     task run_phase(uvm_phase phase);
         
-        // Wait for reset event (kept exactly as in your original draft) [1.2.7]
+        // Wait for reset event (kept exactly as in your original draft) 
         wait(vif.ARESET_n);
         
         forever begin
 
 			@(vif.mon_cb);
             
-            // 1. Detect the User-Side Command Handshake on the bus [1.2.9]
+            // 1. Detect the User-Side Command Handshake on the bus
             if (vif.mon_cb.user_cmd_valid && vif.mon_cb.user_cmd_ready) begin
                 
-                // Create a new transaction item to avoid overwriting previous data [1.1.2]
+                // Create a new transaction item to avoid overwriting previous data 
                 tx = m_axi_tx::type_id::create("tx");
 
-                // Sample user-side command parameters [1, 2]
+                // Sample user-side command parameters
                 tx.user_start_addr  = vif.mon_cb.user_start_addr;
                 tx.user_total_bytes = vif.mon_cb.user_total_bytes;
                 tx.user_rnw         = vif.mon_cb.user_rnw;
                 tx.user_burst       = vif.mon_cb.user_burst;
 
-                // Passively read/sample the physical AXI AW or AR channel outputs of the DUT [1]
+                // Passively read/sample the physical AXI AW or AR channel outputs of the DUT 
                 if (tx.user_rnw == 1'b0) begin : CAPTURE_AXI_AW
                     tx.m_axi_awid    = vif.mon_cb.m_axi_awid;
                     tx.m_axi_awaddr  = vif.mon_cb.m_axi_awaddr;
@@ -57,7 +57,7 @@ class m_axi_mon extends uvm_monitor;
 					tx.m_axi_arready = vif.mon_cb.m_axi_arready;
                 end
 
-                // Calculate the expected number of words for this burst [1]
+                // Calculate the expected number of words for this burst
                 num_beats = (tx.user_total_bytes + (`DATA_WIDTH/8) - 1) / (`DATA_WIDTH/8);
 
                 // 2. Branch to Write or Read payload tracking based on direction
@@ -67,19 +67,19 @@ class m_axi_mon extends uvm_monitor;
                  //   tx.user_tx_wstrb = new[num_beats];
 
                     for (int i = 0; i < num_beats; i++) begin
-                        // Wait for the next clock edge [1.2.7]
+                        // Wait for the next clock edge 
                         @(vif.mon_cb);
                         
-                        // Loop until the write data channel handshakes [1.2.5, 1.2.9]
+                        // Loop until the write data channel handshakes 
                         while (!(vif.mon_cb.user_tx_valid && vif.mon_cb.user_tx_ready)) begin
                             @(vif.mon_cb);
                         end
 
-                        // Sample payload and strobes [1, 2]
+                        // Sample payload and strobes
                         tx.user_tx_data[i]  = vif.mon_cb.user_tx_data;
                         tx.user_tx_wstrb = vif.mon_cb.user_tx_wstrb;
 
-                        // Passively read/sample physical AXI W-channel outputs [1]
+                        // Passively read/sample physical AXI W-channel outputs 
                         tx.m_axi_wdata   = vif.mon_cb.m_axi_wdata;
                         tx.m_axi_wstrb   = vif.mon_cb.m_axi_wstrb;
                         tx.m_axi_wlast   = vif.mon_cb.m_axi_wlast;
@@ -87,13 +87,13 @@ class m_axi_mon extends uvm_monitor;
 						  tx.m_axi_wready  = vif.mon_cb.m_axi_wready; 
                     end
 
-                    // Wait for the write response handshake (completion or error) [1]
+                    // Wait for the write response handshake (completion or error) 
                     @(vif.mon_cb);
                     while (!(vif.mon_cb.write_complete || vif.mon_cb.write_error)) begin
                         @(vif.mon_cb);
                     end
 
-                    // Capture status outputs and AXI response signals [1, 2]
+                    // Capture status outputs and AXI response signals 
                     tx.write_complete = vif.mon_cb.write_complete;
                     tx.write_error    = vif.mon_cb.write_error;
                     tx.m_axi_bready   = vif.mon_cb.m_axi_bready;
@@ -109,26 +109,26 @@ class m_axi_mon extends uvm_monitor;
                         // Wait for the next clock edge [1.2.7]
                         @(vif.mon_cb);
                         
-                        // Loop until the read data channel handshakes [1.2.5, 1.2.9]
+                        // Loop until the read data channel handshakes 
                         while (!(vif.mon_cb.user_rx_valid && vif.mon_cb.user_rx_ready)) begin
                             @(vif.mon_cb);
                         end
 
-                        // Sample incoming read payload and AXI R-channel outputs [1, 2]
+                        // Sample incoming read payload and AXI R-channel outputs 
                         tx.user_rx_data[i] = vif.mon_cb.user_rx_data;
                         tx.m_axi_rready    = vif.mon_cb.m_axi_rready;
-						tx.m_axi_rid       = vif.mon_cb.m_axi_rid;    // <-- NEW: Captured [1]
-                        tx.m_axi_rdata     = vif.mon_cb.m_axi_rdata;  // <-- NEW: Captured [1]
-                        tx.m_axi_rresp     = vif.mon_cb.m_axi_rresp;  // <-- NEW: Captured [1]
-                        tx.m_axi_rlast     = vif.mon_cb.m_axi_rlast;  // <-- NEW: Captured [1]
+						tx.m_axi_rid       = vif.mon_cb.m_axi_rid;    // <-- NEW: Captured 
+                        tx.m_axi_rdata     = vif.mon_cb.m_axi_rdata;  // <-- NEW: Captured 
+                        tx.m_axi_rresp     = vif.mon_cb.m_axi_rresp;  // <-- NEW: Captured 
+                        tx.m_axi_rlast     = vif.mon_cb.m_axi_rlast;  // <-- NEW: Captured 
                         tx.m_axi_rvalid    = vif.mon_cb.m_axi_rvalid; 
                     end
 
-                    // Capture read status outputs [1, 2]
+                    // Capture read status outputs 
                     tx.read_error     = vif.mon_cb.read_error;
                 end
 
-                // 4. Broadcast the completed transaction to Scoreboard/Coverage [1.1.2]
+                // 4. Broadcast the completed transaction to Scoreboard/Coverage 
 				tx.print();		
                 ap_port.write(tx);
             end
