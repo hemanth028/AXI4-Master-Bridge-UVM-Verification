@@ -33,16 +33,11 @@ A dedicated assertions module (`m_axi_sva`) is bound dynamically inside the DUT 
 - **Memory Boundary Protection** — No AXI burst crosses a 4KB boundary, verified by calculating the exact end address of each burst.
 - **Strobe Masking** — The DUT correctly applies the starting offset mask to `m_axi_wstrb` on the first beat of unaligned transfers.
 - **RAW Hazard Blocking** — The AR channel remains stalled during active address hazards.
-
-**Additional checks added during coverage closure:**
-
 - **W-Channel Stability** — `WDATA`, `WSTRB` and `WLAST` stay stable while `WVALID && !WREADY`.
 - **AR 4KB Boundary Check** — The 4KB end-address check is now applied to the read address channel as well as the write address channel.
 - **WLAST Checking** — `WLAST` must be asserted on the last beat of a burst (including single-beat bursts), must not be asserted on any earlier beat, and the W beat counter must clear after the last beat is accepted.
-- **BREADY Intent Check** — Confirms the master never back-pressures the B channel, which is the design intent.
 - **RAW Hazard Antecedent Refined** — A hazard must block a *new* `ARVALID`. Once `ARVALID` has already been presented it has to be held until `ARREADY` (AXI rule), so a hazard that appears while an AR is already pending is not treated as a violation.
-- **Cover Directives** — A `cover property` was added for each key scenario (AW/AR/W/R stall, RAW hazard, AW command FIFO full, single-beat `WLAST`). If an assertion shows zero attempts, its matching cover tells you whether the stimulus never created the scenario or the assertion itself needs review.
-
+  
 **Vacuous assertions (intentional):** Two assertions, the **B-channel stability** and **R-channel stability** checks, are reported as vacuous (zero attempts). Their antecedents (`BVALID && !BREADY`, `RVALID && !RREADY`) can never occur in this testbench because the ready signals are hardwired and no `r_stall` ever happens. These conditions were deliberately **left in the SVA module** because they are required to catch real violations in a real system where the interconnect can back-pressure these channels.
 
 ---
@@ -55,19 +50,11 @@ A dedicated UVM Subscriber class (`m_axi_cov`) contains a comprehensive `covergr
 - Read vs. write direction
 - Burst types (`FIXED`, `INCR`, `WRAP`)
 - Unaligned address starting offsets (`0`, `1`, `2`, `3`)
-- Transfer payload size ranges (tiny, small, medium, large)
+- Transfer payload size ranges 
 - Physical AXI burst lengths (`AWLEN` ranges)
 - AXI bus write/read response codes (`OKAY`, `SLVERR`, `DECERR`)
 - DUT sticky error outputs (`write_error`, `read_error`)
-
-**Additions made during coverage closure:**
-- **Extended payload ranges** — Added `xl` (129–1024 bytes, up to the 256-beat AXI limit), `huge` (1025–4096 bytes, multi-burst) and `jumbo` (4097–8192 bytes, multi-burst with 4KB splits) bins on top of tiny/small/medium/large.
-- **4KB boundary crossing** — New coverpoint on `(start_addr[11:0] + total_bytes) > 4096` with `no_cross` / `crosses` bins, exercising the transaction splitter.
-- **Write strobe patterns** — New coverpoint (write transactions only) with `all_bytes` (`4'hF`), `partial` and `none` bins.
-- **Direction-qualified responses** — `cp_bresp` is sampled only for writes and `cp_rresp` only for reads (`iff` guards). Previously every read sampled `bresp == 0` and every write sampled `rresp == 0`, so the `OKAY` bins were being hit by the wrong transaction type.
-- **Crosses** — `direction × burst type`, `direction × payload size`, `direction × 4KB-crossing`, `burst type × 4KB-crossing`, `write × bresp` and `read × rresp` (the response crosses ignore the opposite direction).
-- **Per-instance coverage** — `option.per_instance = 1` and a report-phase print of the instance coverage.
-
+- **Crosses**  and so on...
 <img width="1664" height="639" alt="{7BF8DFDD-92CD-4308-944F-CA2D53D7F5EF}" src="https://github.com/user-attachments/assets/0afb3766-f126-4147-b02a-104188024a89" />
 
 **Note on the report image:** The misses shown are expected, not missing stimulus. There is no `r_stall` scenario because the corresponding ready signal is hardwired in the testbench, so the `r_stall` cover directive can never be hit, and the two stability assertions tied to those hardwired signals stay vacuous. The checks are kept in the design because they are needed for real-system scenarios, so these items are documented as waived rather than removed.
