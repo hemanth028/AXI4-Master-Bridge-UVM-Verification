@@ -85,6 +85,18 @@ wire [ADDR_WIDTH-1:0] aw_end_addr = m_axi_awaddr + (m_axi_awlen << m_axi_awsize)
 	endproperty
 	assert_ar_stability: assert property (ar_stability)
    		 else $error("SVA ERROR: AR address or control signals changed prematurely!");
+	 
+	property p_wcount_reset;
+        (m_axi_wvalid && m_axi_wready && m_axi_wlast) |=> (dut.w_driver_inst.beat_counter == 8'd0);
+    endproperty
+    assert_wcount_reset: assert property (p_wcount_reset)
+        else $error("SVA ERROR: W beat counter not cleared after WLAST");
+		
+	property w_stability;
+        (m_axi_wvalid && !m_axi_wready) |=>
+            (m_axi_wvalid && $stable(m_axi_wdata) && $stable(m_axi_wstrb) && $stable(m_axi_wlast));
+    endproperty
+    assert_w_stability: assert property (w_stability)
 
 	property b_stability;
     @(posedge clk) disable iff (!rst_n)
